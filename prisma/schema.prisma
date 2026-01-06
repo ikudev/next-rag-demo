@@ -1,0 +1,63 @@
+generator client {
+  provider        = "prisma-client"
+  output          = "../generated/prisma"
+  previewFeatures = ["postgresqlExtensions"]
+}
+
+datasource db {
+  provider   = "postgresql"
+  extensions = [pgvector(map: "vector")]
+}
+
+model Chat {
+  id        String     @id @default(cuid())
+  title     String
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  messages  Message[]
+  documents Document[]
+
+  @@map("chats")
+}
+
+model Message {
+  id        String   @id @default(cuid())
+  chatId    String
+  role      String // "user" or "assistant"
+  content   String   @db.Text
+  createdAt DateTime @default(now())
+
+  chat Chat @relation(fields: [chatId], references: [id], onDelete: Cascade)
+
+  @@index([chatId])
+  @@map("messages")
+}
+
+model Document {
+  id         String      @id @default(cuid())
+  chatId     String? // null means global document
+  filename   String
+  content    String      @db.Text
+  metadata   Json?
+  createdAt  DateTime    @default(now())
+  embeddings Embedding[]
+
+  chat Chat? @relation(fields: [chatId], references: [id], onDelete: Cascade)
+
+  @@index([chatId])
+  @@map("documents")
+}
+
+model Embedding {
+  id         String                      @id @default(cuid())
+  documentId String
+  embedding  Unsupported("vector(768)")? // Google text-embedding-004 uses 768 dimensions
+  chunkIndex Int
+  chunkText  String                      @db.Text
+  createdAt  DateTime                    @default(now())
+
+  document Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@index([documentId])
+  @@map("embeddings")
+}
