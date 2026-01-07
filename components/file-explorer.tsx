@@ -8,12 +8,17 @@ import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { Upload, File, Trash2, Loader2 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
+import {
+  getDocuments,
+  uploadDocument,
+  deleteDocument,
+} from '@/lib/actions/document.actions';
 
 interface Document {
   id: string;
   filename: string;
   chatId: string | null;
-  createdAt: string;
+  createdAt: Date;
   _count?: {
     embeddings: number;
   };
@@ -32,8 +37,7 @@ export function FileExplorer({ chatId, refreshTrigger }: FileExplorerProps) {
   const fetchDocuments = useCallback(async () => {
     try {
       // Fetch all documents
-      const response = await fetch('/api/documents');
-      const allDocs: Document[] = await response.json();
+      const allDocs = await getDocuments();
 
       // Separate chat-specific and global documents
       const chatDocs = allDocs.filter((doc) => doc.chatId === chatId);
@@ -65,10 +69,7 @@ export function FileExplorer({ chatId, refreshTrigger }: FileExplorerProps) {
         formData.append('chatId', chatId);
       }
 
-      await fetch('/api/documents', {
-        method: 'POST',
-        body: formData,
-      });
+      await uploadDocument(formData);
 
       await fetchDocuments();
     } catch (error) {
@@ -86,7 +87,7 @@ export function FileExplorer({ chatId, refreshTrigger }: FileExplorerProps) {
     }
 
     try {
-      await fetch(`/api/documents/${docId}`, { method: 'DELETE' });
+      await deleteDocument(docId);
       await fetchDocuments();
     } catch (error) {
       console.error('Failed to delete document:', error);

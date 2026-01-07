@@ -1,20 +1,16 @@
 import { streamText, UIMessage } from 'ai';
 import { aiModel } from '@/lib/ai-config';
-import prisma from '@/lib/prisma';
 
 export const maxDuration = 30;
 
-export async function POST(
-  request: Request,
-  { params }: { params: Promise<{ id: string }> },
-) {
+export async function POST(request: Request) {
   try {
-    const { id: chatId } = await params;
-
-    // Extract messages from the request
-    const { messages }: { messages: UIMessage[] } = await request.json();
+    // Extract messages and chatId from the request
+    const { messages, chatId }: { messages: UIMessage[]; chatId?: string } =
+      await request.json();
 
     console.log('=== MESSAGES COUNT ===', messages.length);
+    console.log('=== CHAT ID ===', chatId);
 
     if (messages.length === 0) {
       console.error('No messages in request');

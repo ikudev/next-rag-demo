@@ -6,12 +6,13 @@ import { Card } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Plus, MessageSquare, Trash2 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
+import { getChats, createChat, deleteChat } from '@/lib/actions/chat.actions';
 
 interface Chat {
   id: string;
   title: string;
-  createdAt: string;
-  updatedAt: string;
+  createdAt: Date;
+  updatedAt: Date;
   _count?: {
     messages: number;
   };
@@ -39,8 +40,7 @@ export function ChatList({
 
   const fetchChats = async () => {
     try {
-      const response = await fetch('/api/chats');
-      const data = await response.json();
+      const data = await getChats();
       setChats(data);
     } catch (error) {
       console.error('Failed to fetch chats:', error);
@@ -51,12 +51,7 @@ export function ChatList({
 
   const handleCreateChat = async () => {
     try {
-      const response = await fetch('/api/chats', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title: 'New Chat' }),
-      });
-      const newChat = await response.json();
+      const newChat = await createChat('New Chat');
       setChats([newChat, ...chats]);
       onCreateChat();
       onSelectChat(newChat.id);
@@ -73,7 +68,7 @@ export function ChatList({
     }
 
     try {
-      await fetch(`/api/chats/${chatId}`, { method: 'DELETE' });
+      await deleteChat(chatId);
       setChats(chats.filter((chat) => chat.id !== chatId));
       if (selectedChatId === chatId) {
         onSelectChat('');

@@ -7,7 +7,6 @@ import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Card } from '@/components/ui/card';
 import { Send, Bot, User, MessageSquare } from 'lucide-react';
-import { DefaultChatTransport } from 'ai';
 
 interface ChatInterfaceProps {
   chatId: string | null;
@@ -18,9 +17,6 @@ export function ChatInterface({ chatId }: ChatInterfaceProps) {
   const [input, setInput] = useState('');
 
   const { messages, sendMessage, status } = useChat({
-    transport: new DefaultChatTransport({
-      api: chatId ? `/api/chats/${chatId}/messages` : undefined,
-    }),
     id: chatId || undefined,
   });
 
