@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import prisma from '@/lib/prisma';
+import prisma, { Prisma } from '@/lib/prisma';
 import { processDocument } from '@/lib/document-processor';
 import { storeEmbeddings } from '@/lib/vector-store';
 
@@ -53,7 +53,9 @@ export async function POST(request: Request) {
         filename: processed.filename,
         content: processed.content,
         chatId: chatId || null,
-        metadata: processed.metadata as Record<string, unknown> | null,
+        metadata: (processed.metadata ?? undefined) as
+          | Prisma.InputJsonValue
+          | undefined,
       },
     });
 
