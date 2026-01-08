@@ -1,6 +1,23 @@
-import prisma from '@/lib/prisma';
+import prisma, { Prisma } from '@/lib/prisma';
 import { AI_CONFIG, embeddings } from '@/lib/ai-config';
-import crypto from 'crypto';
+import { PrismaVectorStore } from '@langchain/community/vectorstores/prisma';
+import { Embedding } from '@/generated/prisma/client';
+
+/**
+ * Initialize the PrismaVectorStore
+ */
+const vectorStore = PrismaVectorStore.withModel<Embedding>(prisma).create(
+  embeddings,
+  {
+    prisma: Prisma,
+    tableName: 'embeddings' as unknown as 'Embedding',
+    vectorColumnName: 'embedding',
+    columns: {
+      id: PrismaVectorStore.IdColumn,
+      chunkText: PrismaVectorStore.ContentColumn,
+    },
+  },
+);
 
 /**
  * Generate embeddings for a given text using LangChain OpenAI embeddings via AI Gateway
@@ -19,38 +36,22 @@ export async function storeEmbeddings(
   documentId: string,
   chunks: string[],
 ): Promise<void> {
-  // Generate embeddings for all chunks
-  const embeddingsData = await Promise.all(
-    chunks.map(async (chunk, index) => {
-      const embedding = await generateEmbedding(chunk);
-      return {
-        documentId,
-        chunkText: chunk,
-        chunkIndex: index,
-        embedding: `[${embedding.join(',')}]`, // PostgreSQL vector format
-      };
-    }),
+  // First, create the Embedding records without the vectors
+  // We do this so we can then use addModels to update them with vectors
+  const embeddingModels = await prisma.$transaction(
+    chunks.map((chunk, index) =>
+      prisma.embedding.create({
+        data: {
+          documentId,
+          chunkText: chunk,
+          chunkIndex: index,
+        },
+      }),
+    ),
   );
 
-  // Store all embeddings in the database using $executeRawUnsafe for batch insert
-  // We use this because $executeRaw with template literals doesn't support dynamic VALUES clauses
-  const values = embeddingsData
-    .map(
-      (data) => `(
-      '${crypto.randomUUID()}',
-      '${data.documentId.replace(/'/g, "''")}',
-      '${data.chunkText.replace(/'/g, "''")}',
-      ${data.chunkIndex},
-      '${data.embedding}'::vector,
-      NOW()
-    )`,
-    )
-    .join(', ');
-
-  await prisma.$executeRawUnsafe(`
-    INSERT INTO embeddings (id, "documentId", "chunkText", "chunkIndex", embedding, "createdAt")
-    VALUES ${values}
-  `);
+  // Use addModels to generate and store embeddings
+  await vectorStore.addModels(embeddingModels);
 }
 
 /**
@@ -64,39 +65,36 @@ export async function searchSimilarChunks(
   chatId: string,
   topK: number = AI_CONFIG.topK,
 ) {
-  // Generate embedding for the query
-  const queryEmbedding = await generateEmbedding(query);
+  // First, get the IDs of documents that belong to this chat or are global
+  const docs = await prisma.document.findMany({
+    where: {
+      OR: [{ chatId: chatId }, { chatId: null }],
+    },
+    select: { id: true, filename: true },
+  });
+  const docIds = docs.map((d) => d.id);
+  const filenameMap = Object.fromEntries(docs.map((d) => [d.id, d.filename]));
 
-  // Convert the embedding array to a PostgreSQL vector format
-  const vectorString = `[${queryEmbedding.join(',')}]`;
+  // Search for similar chunks using PrismaVectorStore's similaritySearch
+  // We filter by the document IDs we found
+  const results = await vectorStore.similaritySearch(query, topK, {
+    documentId: {
+      in: docIds,
+    },
+  });
 
-  // Search for similar chunks using pgvector's cosine similarity
-  // We search in both chat-specific documents and global documents (chatId = null)
-  const results = await prisma.$queryRaw<
-    Array<{
-      id: string;
-      chunkText: string;
-      chunkIndex: number;
-      documentId: string;
-      filename: string;
-      similarity: number;
-    }>
-  >`
-    SELECT
-      e.id,
-      e."chunkText",
-      e."chunkIndex",
-      e."documentId",
-      d.filename,
-      1 - (e.embedding <=> ${vectorString}::vector) as similarity
-    FROM embeddings e
-    JOIN documents d ON e."documentId" = d.id
-    WHERE d."chatId" = ${chatId} OR d."chatId" IS NULL
-    ORDER BY e.embedding <=> ${vectorString}::vector
-    LIMIT ${topK}
-  `;
-
-  return results;
+  // Map results back to the expected format
+  return results.map((result) => {
+    const embedding = result.metadata as unknown as Embedding;
+    return {
+      id: embedding.id,
+      chunkText: embedding.chunkText,
+      chunkIndex: embedding.chunkIndex,
+      documentId: embedding.documentId,
+      filename: filenameMap[embedding.documentId] || 'Unknown',
+      similarity: 1, // PrismaVectorStore doesn't return scores in similaritySearch result directly
+    };
+  });
 }
 
 /**

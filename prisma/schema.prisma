@@ -51,7 +51,7 @@ model Document {
 model Embedding {
   id         String                      @id @default(cuid())
   documentId String
-  embedding  Unsupported("vector(768)")? // Google text-embedding-004 uses 768 dimensions
+  embedding  Unsupported("vector(768)")? // use 768 dimensions
   chunkIndex Int
   chunkText  String                      @db.Text
   createdAt  DateTime                    @default(now())
