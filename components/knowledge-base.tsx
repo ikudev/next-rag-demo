@@ -151,7 +151,7 @@ export function KnowledgeBase({ chatId, refreshTrigger }: KnowledgeBaseProps) {
                 <input
                   type='file'
                   className='hidden'
-                  accept='.txt,.md,.json'
+                  accept='.txt,.md,.json,.pdf'
                   onChange={(e) => handleFileUpload(e, false)}
                   disabled={uploading}
                 />
@@ -212,7 +212,7 @@ export function KnowledgeBase({ chatId, refreshTrigger }: KnowledgeBaseProps) {
               <input
                 type='file'
                 className='hidden'
-                accept='.txt,.md,.json'
+                accept='.txt,.md,.json,.pdf'
                 onChange={(e) => handleFileUpload(e, true)}
                 disabled={uploading}
               />

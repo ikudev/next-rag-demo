@@ -1,4 +1,5 @@
 import { RecursiveCharacterTextSplitter } from '@langchain/textsplitters';
+import { PDFLoader } from '@langchain/community/document_loaders/fs/pdf';
 
 export interface ProcessedDocument {
   filename: string;
@@ -29,19 +30,13 @@ export async function processDocument(
   };
 }
 
-export function extractTextFromFile(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
+export async function extractTextFromFile(file: File): Promise<string> {
+  if (file.type === 'application/pdf' || file.name.endsWith('.pdf')) {
+    const loader = new PDFLoader(file);
+    const docs = await loader.load();
+    return docs.map((doc) => doc.pageContent).join('\n');
+  }
 
-    reader.onload = (e) => {
-      const text = e.target?.result as string;
-      resolve(text);
-    };
-
-    reader.onerror = () => {
-      reject(new Error('Failed to read file'));
-    };
-
-    reader.readAsText(file);
-  });
+  // Fallback to reading as text (works for .txt, .md, etc.)
+  return await file.text();
 }

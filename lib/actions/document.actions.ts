@@ -2,7 +2,7 @@
 
 import prisma, { Prisma } from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
-import { processDocument } from '@/lib/document-processor';
+import { processDocument, extractTextFromFile } from '@/lib/document-processor';
 import { storeEmbeddings } from '@/lib/vector-store';
 
 export interface Document {
@@ -64,7 +64,7 @@ export async function uploadDocument(formData: FormData): Promise<Document> {
     }
 
     // Read file content
-    const content = await file.text();
+    const content = await extractTextFromFile(file);
 
     // Process document (chunk it)
     const processed = await processDocument(file.name, content, {
