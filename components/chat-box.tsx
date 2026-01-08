@@ -1,6 +1,7 @@
 'use client';
 
 import { useChat } from '@ai-sdk/react';
+import { MemoizedMarkdown } from '@/components/memoized-markdown';
 import { useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -72,12 +73,22 @@ export function ChatBox({ chatId }: ChatBoxProps) {
                       : 'bg-muted'
                   }`}
                 >
-                  <div className='text-sm whitespace-pre-wrap'>
+                  <div
+                    className={`text-sm ${
+                      message.role === 'assistant'
+                        ? 'prose prose-sm dark:prose-invert max-w-none'
+                        : 'whitespace-pre-wrap'
+                    }`}
+                  >
                     {message.parts.map((part, i) => {
                       switch (part.type) {
                         case 'text':
                           return (
-                            <div key={`${message.id}-${i}`}>{part.text}</div>
+                            <MemoizedMarkdown
+                              id={message.id}
+                              key={`${message.id}-${i}`}
+                              content={part.text}
+                            />
                           );
                         default:
                           return null;
