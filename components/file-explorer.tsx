@@ -6,6 +6,18 @@ import { Card } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
+import { toast } from 'sonner';
 import { Upload, File, Trash2, Loader2 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import {
@@ -47,6 +59,7 @@ export function FileExplorer({ chatId, refreshTrigger }: FileExplorerProps) {
       setGlobalDocuments(globalDocs);
     } catch (error) {
       console.error('Failed to fetch documents:', error);
+      toast.error('Failed to fetch documents');
     }
   }, [chatId]);
 
@@ -72,9 +85,10 @@ export function FileExplorer({ chatId, refreshTrigger }: FileExplorerProps) {
       await uploadDocument(formData);
 
       await fetchDocuments();
+      toast.success('File uploaded successfully');
     } catch (error) {
       console.error('Failed to upload file:', error);
-      alert('Failed to upload file');
+      toast.error('Failed to upload file');
     } finally {
       setUploading(false);
       e.target.value = '';
@@ -82,15 +96,13 @@ export function FileExplorer({ chatId, refreshTrigger }: FileExplorerProps) {
   };
 
   const handleDeleteDocument = async (docId: string) => {
-    if (!confirm('Are you sure you want to delete this document?')) {
-      return;
-    }
-
     try {
       await deleteDocument(docId);
       await fetchDocuments();
+      toast.success('Document deleted');
     } catch (error) {
       console.error('Failed to delete document:', error);
+      toast.error('Failed to delete document');
     }
   };
 
@@ -151,7 +163,7 @@ export function FileExplorer({ chatId, refreshTrigger }: FileExplorerProps) {
                 <DocumentItem
                   key={doc.id}
                   document={doc}
-                  onDelete={handleDeleteDocument}
+                  onDelete={() => handleDeleteDocument(doc.id)}
                 />
               ))
             )}
@@ -206,7 +218,7 @@ export function FileExplorer({ chatId, refreshTrigger }: FileExplorerProps) {
                 <DocumentItem
                   key={doc.id}
                   document={doc}
-                  onDelete={handleDeleteDocument}
+                  onDelete={() => handleDeleteDocument(doc.id)}
                 />
               ))
             )}
@@ -222,7 +234,7 @@ function DocumentItem({
   onDelete,
 }: {
   document: Document;
-  onDelete: (id: string) => void;
+  onDelete: () => void;
 }) {
   return (
     <Card className='p-2'>
@@ -241,14 +253,32 @@ function DocumentItem({
             </span>
           </div>
         </div>
-        <Button
-          variant='ghost'
-          size='icon'
-          className='h-6 w-6 shrink-0'
-          onClick={() => onDelete(document.id)}
-        >
-          <Trash2 className='w-3 h-3' />
-        </Button>
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button variant='ghost' size='icon' className='h-6 w-6 shrink-0'>
+              <Trash2 className='w-3 h-3' />
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This action cannot be undone. This will permanently delete the
+                document &quot;{document.filename}&quot; and its associated
+                embeddings.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={onDelete}
+                className='bg-destructive text-destructive-foreground hover:bg-destructive/90'
+              >
+                Delete
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </Card>
   );

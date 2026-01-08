@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
+import { Toaster } from '@/components/ui/sonner';
 import './globals.css';
 
 const geistSans = Geist({
@@ -14,7 +15,8 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: 'Next RAG Demo',
-  description: 'A demo application of retrieval augmented generation using Next.js, AI SDK and LangChain',
+  description:
+    'A demo application of retrieval augmented generation using Next.js, AI SDK and LangChain',
 };
 
 export default function RootLayout({
@@ -28,6 +30,7 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         {children}
+        <Toaster />
       </body>
     </html>
   );

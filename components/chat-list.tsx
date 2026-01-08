@@ -4,6 +4,18 @@ import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
+import { toast } from 'sonner';
 import { Plus, MessageSquare, Trash2 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { getChats, createChat, deleteChat } from '@/lib/actions/chat.actions';
@@ -44,6 +56,7 @@ export function ChatList({
       setChats(data);
     } catch (error) {
       console.error('Failed to fetch chats:', error);
+      toast.error('Failed to fetch chats');
     } finally {
       setLoading(false);
     }
@@ -55,26 +68,24 @@ export function ChatList({
       setChats([newChat, ...chats]);
       onCreateChat();
       onSelectChat(newChat.id);
+      toast.success('Chat created');
     } catch (error) {
       console.error('Failed to create chat:', error);
+      toast.error('Failed to create chat');
     }
   };
 
-  const handleDeleteChat = async (chatId: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-
-    if (!confirm('Are you sure you want to delete this chat?')) {
-      return;
-    }
-
+  const handleDeleteChat = async (chatId: string) => {
     try {
       await deleteChat(chatId);
       setChats(chats.filter((chat) => chat.id !== chatId));
       if (selectedChatId === chatId) {
         onSelectChat('');
       }
+      toast.success('Chat deleted');
     } catch (error) {
       console.error('Failed to delete chat:', error);
+      toast.error('Failed to delete chat');
     }
   };
 
@@ -121,14 +132,37 @@ export function ChatList({
                       })}
                     </p>
                   </div>
-                  <Button
-                    variant='ghost'
-                    size='icon'
-                    className='h-6 w-6 shrink-0'
-                    onClick={(e) => handleDeleteChat(chat.id, e)}
-                  >
-                    <Trash2 className='w-3 h-3' />
-                  </Button>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button
+                        variant='ghost'
+                        size='icon'
+                        className='h-6 w-6 shrink-0'
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <Trash2 className='w-3 h-3' />
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent onClick={(e) => e.stopPropagation()}>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          This action cannot be undone. This will permanently
+                          delete the chat &quot;{chat.title}&quot; and all its
+                          messages.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={() => handleDeleteChat(chat.id)}
+                          className='bg-destructive text-destructive-foreground hover:bg-destructive/90'
+                        >
+                          Delete
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
                 </div>
               </Card>
             ))
