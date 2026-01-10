@@ -10,6 +10,16 @@ A high-performance Retrieval-Augmented Generation (RAG) demo application built w
 - **Responsive 3-Column UI**: A modern interface with chat history, a streaming chat window, and a document attachment panel.
 - **Usage Limits & Credits**: Integrated usage monitoring via AI Gateway to manage credit balance and storage limits.
 
+## Technical Stack
+
+- **App Framework**: [Next.js 16](https://nextjs.org/) (App Router) with [React 19](https://react.dev/)
+- **AI & RAG Framework**: [Vercel AI SDK](https://sdk.vercel.ai/), [LangChain](https://js.langchain.com/)
+- **Database & ORM**: [Prisma 7](https://www.prisma.io/) with [PostgreSQL](https://www.postgresql.org/) and [`pgvector`](https://github.com/pgvector/pgvector)
+- **UI Components**: [ShadcnUI](https://ui.shadcn.com/), and [Vercel AI Elements](https://ai-sdk.dev/elements)
+- **Styling**: [Tailwind CSS](https://tailwindcss.com/)
+- **Storage**: [Vercel Blob](https://vercel.com/docs/storage/vercel-blob)
+- **Infrastructure**: [Vercel](https://vercel.com/) and [AI Gateway](https://vercel.com/ai-gateway/)
+
 ## Local Setup Instructions
 
 ### 1. Prerequisites
