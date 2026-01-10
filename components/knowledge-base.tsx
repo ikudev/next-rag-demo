@@ -78,6 +78,18 @@ export function KnowledgeBase({ refreshTrigger }: KnowledgeBaseProps) {
     fetchDocuments();
   }, [fetchDocuments, refreshTrigger]);
 
+  useEffect(() => {
+    const handleUpdate = () => {
+      fetchDocuments();
+    };
+    window.addEventListener('knowledge-base-updated', handleUpdate);
+    window.addEventListener('chat-updated', handleUpdate);
+    return () => {
+      window.removeEventListener('knowledge-base-updated', handleUpdate);
+      window.removeEventListener('chat-updated', handleUpdate);
+    };
+  }, [fetchDocuments]);
+
   const handleFileUpload = async (
     e: React.ChangeEvent<HTMLInputElement>,
     isGlobal: boolean,
@@ -94,8 +106,8 @@ export function KnowledgeBase({ refreshTrigger }: KnowledgeBaseProps) {
       }
 
       await uploadDocument(formData);
-
       await fetchDocuments();
+      window.dispatchEvent(new CustomEvent('knowledge-base-updated'));
       toast.success('File uploaded successfully');
     } catch (error) {
       console.error('Failed to upload file:', error);
@@ -110,6 +122,7 @@ export function KnowledgeBase({ refreshTrigger }: KnowledgeBaseProps) {
     try {
       await deleteDocument(docId);
       await fetchDocuments();
+      window.dispatchEvent(new CustomEvent('knowledge-base-updated'));
       toast.success('Document deleted from global library');
     } catch (error) {
       console.error('Failed to delete document:', error);
@@ -122,6 +135,7 @@ export function KnowledgeBase({ refreshTrigger }: KnowledgeBaseProps) {
     try {
       await addDocumentToChat(docId, chatId);
       await fetchDocuments();
+      window.dispatchEvent(new CustomEvent('knowledge-base-updated'));
       toast.success('Document added to chat');
     } catch (error) {
       console.error('Failed to add document to chat:', error);
@@ -134,6 +148,7 @@ export function KnowledgeBase({ refreshTrigger }: KnowledgeBaseProps) {
     try {
       await removeDocumentFromChat(docId, chatId);
       await fetchDocuments();
+      window.dispatchEvent(new CustomEvent('knowledge-base-updated'));
       toast.success('Document removed from chat');
     } catch (error) {
       console.error('Failed to remove document from chat:', error);

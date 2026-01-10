@@ -176,7 +176,8 @@ export function ChatBox({
       formData.append('chatId', chatId);
 
       await uploadDocument(formData);
-      router.refresh(); // Refresh to update KnowledgeBase
+      router.refresh();
+      window.dispatchEvent(new CustomEvent('knowledge-base-updated'));
       toast.success('Document uploaded successfully');
     } catch (error) {
       console.error('Failed to upload document:', error);
