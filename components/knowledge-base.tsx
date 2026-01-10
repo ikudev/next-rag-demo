@@ -154,32 +154,6 @@ export function KnowledgeBase({ refreshTrigger }: KnowledgeBaseProps) {
             <h3 className='text-xs font-medium text-muted-foreground uppercase'>
               Current Chat
             </h3>
-            {chatId && (
-              <label>
-                <input
-                  type='file'
-                  className='hidden'
-                  accept='.txt,.md,.json,.pdf'
-                  onChange={(e) => handleFileUpload(e, false)}
-                  disabled={uploading}
-                />
-                <Button
-                  size='sm'
-                  variant='outline'
-                  className='h-7 text-xs'
-                  asChild
-                >
-                  <span>
-                    {uploading ? (
-                      <Loader2 className='w-3 h-3 mr-1 animate-spin' />
-                    ) : (
-                      <Upload className='w-3 h-3 mr-1' />
-                    )}
-                    Upload
-                  </span>
-                </Button>
-              </label>
-            )}
           </div>
         </div>
 

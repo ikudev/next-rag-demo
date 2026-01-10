@@ -23,7 +23,16 @@ import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useChat } from '@ai-sdk/react';
 import type { UIMessage } from 'ai';
-import { Bot, MessageSquare, Edit2, RefreshCw, Check, X } from 'lucide-react';
+import {
+  Bot,
+  MessageSquare,
+  Edit2,
+  RefreshCw,
+  Check,
+  X,
+  Upload,
+  Loader2,
+} from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { useRouter } from 'next/navigation';
 import {
@@ -31,6 +40,9 @@ import {
   generateTitle,
   updateChatTitle,
 } from '@/lib/actions/chat.actions';
+import { uploadDocument } from '@/lib/actions/document.actions';
+import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
 
 interface ChatBoxProps {
   chatId: string | null;
@@ -47,6 +59,7 @@ export function ChatBox({
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [editTitleValue, setEditTitleValue] = useState(initialTitle || '');
   const [isRegenerating, setIsRegenerating] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
   const [input, setInput] = useState('');
   const router = useRouter();
 
@@ -147,6 +160,30 @@ export function ChatBox({
       console.error('Failed to regenerate title:', error);
     } finally {
       setIsRegenerating(false);
+    }
+  };
+
+  const handleDocumentUpload = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    const file = e.target.files?.[0];
+    if (!file || !chatId) return;
+
+    setIsUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('chatId', chatId);
+
+      await uploadDocument(formData);
+      router.refresh(); // Refresh to update KnowledgeBase
+      toast.success('Document uploaded successfully');
+    } catch (error) {
+      console.error('Failed to upload document:', error);
+      toast.error('Failed to upload document');
+    } finally {
+      setIsUploading(false);
+      e.target.value = '';
     }
   };
 
@@ -306,7 +343,29 @@ export function ChatBox({
               />
             </PromptInputBody>
             <PromptInputFooter>
-              <PromptInputTools></PromptInputTools>
+              <PromptInputTools>
+                <label className='cursor-pointer'>
+                  <input
+                    type='file'
+                    className='hidden'
+                    accept='.txt,.md,.json,.pdf'
+                    onChange={handleDocumentUpload}
+                    disabled={isUploading}
+                  />
+                  <div
+                    className={cn(
+                      'flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-accent-foreground',
+                      isUploading && 'opacity-50 cursor-not-allowed',
+                    )}
+                  >
+                    {isUploading ? (
+                      <Loader2 className='h-4 w-4 animate-spin' />
+                    ) : (
+                      <Upload className='h-4 w-4' />
+                    )}
+                  </div>
+                </label>
+              </PromptInputTools>
               <PromptInputSubmit
                 disabled={
                   !input.trim() ||
