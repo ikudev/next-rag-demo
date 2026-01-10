@@ -1,5 +1,6 @@
 'use server';
 
+import { gatewayApiKey, gatewayBaseURL } from '../ai-config';
 import { getTotalFileSize } from './document.actions';
 
 export interface UsageState {
@@ -12,22 +13,17 @@ export interface UsageState {
 
 export async function getUsageState(): Promise<UsageState> {
   let credits = 0;
-  const apiKey =
-    process.env.AI_GATEWAY_API_KEY || process.env.VERCEL_OIDC_TOKEN;
 
   try {
-    if (apiKey) {
-      const response = await fetch(
-        `${process.env.AI_GATEWAY_BASE_URL}/credits`,
-        {
-          method: 'GET',
-          headers: {
-            Authorization: `Bearer ${apiKey}`,
-            'Content-Type': 'application/json',
-          },
-          next: { revalidate: 60 }, // Cache for 1 minute
+    if (gatewayApiKey) {
+      const response = await fetch(`${gatewayBaseURL}/credits`, {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${gatewayApiKey}`,
+          'Content-Type': 'application/json',
         },
-      );
+        next: { revalidate: 60 }, // Cache for 1 minute
+      });
 
       if (response.ok) {
         const data = await response.json();

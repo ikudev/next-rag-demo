@@ -1,7 +1,7 @@
 import { ChatOpenAI, OpenAIEmbeddings } from '@langchain/openai';
 
-const gatewayApiKey = process.env.AI_GATEWAY_API_KEY;
-const gatewayBaseURL = process.env.AI_GATEWAY_BASE_URL;
+export const gatewayApiKey = process.env.AI_GATEWAY_API_KEY;
+export const gatewayBaseURL = process.env.AI_GATEWAY_BASE_URL;
 
 export const AI_CONFIG = {
   chatModelName: 'google/gemini-3-flash',
