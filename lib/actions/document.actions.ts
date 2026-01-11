@@ -178,7 +178,11 @@ export async function deleteDocument(id: string): Promise<void> {
     });
 
     if (document?.url) {
-      await del(document.url);
+      try {
+        await del(document.url);
+      } catch (blobError) {
+        console.error('Failed to delete file from blob storage:', blobError);
+      }
     }
 
     await prisma.document.delete({
